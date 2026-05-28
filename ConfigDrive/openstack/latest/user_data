@@ -1,0 +1,40 @@
+#ps1_sysnative
+# ---
+# Type        : SCRIPT
+# Auteur      : Louis MEDO - louis.medo@loutik.fr
+# Date        : 28/05/2026
+# Rôle        : Provisionnement de la configuration réseau pour Cloudbase-Init
+# ---
+$LogFile = "C:\cloudbase-network.log"
+Add-Content -Path $LogFile -Value "--- Demarrage Config Reseau ---"
+
+$retry = 0
+$adapter = $null
+
+# Boucle d'attente de 150 secondes
+while (-not $adapter -and $retry -lt 30) {
+    $adapter = Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | Select-Object -First 1
+    Start-Sleep -Seconds 5
+    $retry++
+    Add-Content -Path $LogFile -Value "Recherche carte active... Tentative $retry"
+}
+
+if (-not $adapter) {
+    Add-Content -Path $LogFile -Value "ERREUR: Aucune carte trouvee."
+    exit
+}
+
+$ifIndex = $adapter.ifIndex
+Add-Content -Path $LogFile -Value "Carte trouvee : Index $ifIndex"
+
+try {
+    Set-NetIPInterface -InterfaceIndex $ifIndex -Dhcp Disabled -ErrorAction Stop
+    Remove-NetIPAddress -InterfaceIndex $ifIndex -Confirm:$false -ErrorAction SilentlyContinue
+    
+    New-NetIPAddress -InterfaceIndex $ifIndex -IPAddress "1.1.1.1" -PrefixLength 24 -DefaultGateway "1.1.1.1" -ErrorAction Stop
+    Set-DnsClientServerAddress -InterfaceIndex $ifIndex -ServerAddresses "1.1.1.1" -ErrorAction Stop
+    
+    Add-Content -Path $LogFile -Value "Succes: Configuration IP appliquee."
+} catch {
+    Add-Content -Path $LogFile -Value "ERREUR FATALE: $($_.Exception.Message)"
+}
