@@ -29,6 +29,7 @@ Add-Content -Path $LogFile -Value "Carte trouvee : Index $ifIndex"
 
 try {
     Set-NetIPInterface -InterfaceIndex $ifIndex -Dhcp Disabled -ErrorAction Stop
+    Get-NetRoute -InterfaceIndex $ifIndex -DestinationPrefix "0.0.0.0/0" -ErrorAction SilentlyContinue | Remove-NetRoute -Confirm:$false
     Remove-NetIPAddress -InterfaceIndex $ifIndex -Confirm:$false -ErrorAction SilentlyContinue
     
     New-NetIPAddress -InterfaceIndex $ifIndex -IPAddress "1.1.1.1" -PrefixLength 24 -DefaultGateway "1.1.1.1" -ErrorAction Stop
