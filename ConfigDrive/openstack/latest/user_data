@@ -35,6 +35,9 @@ try {
     Set-DnsClientServerAddress -InterfaceIndex $ifIndex -ServerAddresses "1.1.1.1" -ErrorAction Stop
     
     Add-Content -Path $LogFile -Value "Succes: Configuration IP appliquee."
+
+    net accounts /maxpwage:unlimited
+    Add-Content -Path $LogFile -Value "Succes: Politique d'expiration locale debrayee."
 } catch {
     Add-Content -Path $LogFile -Value "ERREUR FATALE: $($_.Exception.Message)"
 }
